@@ -26,6 +26,7 @@ import (
 	"flag"
 	"fmt"
 	"go/format"
+    stdhex "encoding/hex"
 	"io"
 	"log"
 	"os"
@@ -54,7 +55,7 @@ var (
 	adminClient         *bigtable.AdminClient
 	instanceAdminClient *bigtable.InstanceAdminClient
 
-	version      = "<unknown version>"
+	version      = "meagar"
 	revision     = "<unknown revision>"
 	revisionDate = "<unknown revision date>"
 	cliUserAgent = "cbt-cli-go/unknown"
@@ -980,6 +981,21 @@ func doDeleteCluster(ctx context.Context, args ...string) {
 	}
 }
 
+// func doDeleteCell(ctx context.Context, args ...string) {
+//     usage := "usage: cbt deletecell <table> <row> <family> <column> [@ts1[-@ts2]] [app-profile=<app profile id>]"
+//     if len(args < 4 || len(args) > 7) {
+//         log.Fatal(usage);
+//     }
+//
+//     var appProfile string;
+//     if strings.StartWith(args[len(args) - 1], "app-profile=") {
+//         appProfile = args[len(args) - 1];
+//         args = args[:len(args)-1]
+//     }
+//
+//     tbl := getClient(bigtable.ClientConfig{AppProfile: appProfile}).Open(args[0]);
+// }
+
 func doDeleteColumn(ctx context.Context, args ...string) {
 	usage := "usage: cbt deletecolumn <table> <row> <family> <column> [app-profile=<app profile id>]"
 	if len(args) != 4 && len(args) != 5 {
@@ -1553,7 +1569,22 @@ func doSet(ctx context.Context, args ...string) {
 				ts = bigtable.Timestamp(n)
 			}
 		}
-		mut.Set(m[1], m[2], ts, []byte(val))
+
+         var valBytes []byte;
+
+        if strings.HasPrefix(val, "0x") {
+            log.Printf("Parsing %v as hex", val)
+            data, err := stdhex.DecodeString(val[2:]);
+            if err != nil {
+                log.Panic(err);
+            }
+            log.Printf("Parsed %v", data)
+            valBytes = data;
+        } else {
+            valBytes = []byte(val);
+        }
+
+		mut.Set(m[1], m[2], ts, valBytes);
 	}
 	tbl := getClient(bigtable.ClientConfig{AppProfile: appProfile}).Open(args[0])
 	if err := tbl.Apply(ctx, row, mut); err != nil {
