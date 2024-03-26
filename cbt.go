@@ -23,10 +23,10 @@ import (
 	"context"
 	_ "embed"
 	"encoding/csv"
+	stdhex "encoding/hex"
 	"flag"
 	"fmt"
 	"go/format"
-    stdhex "encoding/hex"
 	"io"
 	"log"
 	"os"
@@ -1570,21 +1570,21 @@ func doSet(ctx context.Context, args ...string) {
 			}
 		}
 
-         var valBytes []byte;
+		var valBytes []byte
 
-        if strings.HasPrefix(val, "0x") {
-            log.Printf("Parsing %v as hex", val)
-            data, err := stdhex.DecodeString(val[2:]);
-            if err != nil {
-                log.Panic(err);
-            }
-            log.Printf("Parsed %v", data)
-            valBytes = data;
-        } else {
-            valBytes = []byte(val);
-        }
+		if strings.HasPrefix(val, "0x") {
+			log.Printf("Parsing %v as hex", val)
+			data, err := stdhex.DecodeString(val[2:])
+			if err != nil {
+				log.Panic(err)
+			}
+			log.Printf("Parsed %v", data)
+			valBytes = data
+		} else {
+			valBytes = []byte(val)
+		}
 
-		mut.Set(m[1], m[2], ts, valBytes);
+		mut.Set(m[1], m[2], ts, valBytes)
 	}
 	tbl := getClient(bigtable.ClientConfig{AppProfile: appProfile}).Open(args[0])
 	if err := tbl.Apply(ctx, row, mut); err != nil {
